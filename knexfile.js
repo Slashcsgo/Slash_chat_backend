@@ -1,5 +1,5 @@
-const dotenv = require('dotenv')
-dotenv.config()
+import {config} from "dotenv"
+config()
 
 export default {
   client: 'pg',
