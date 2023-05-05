@@ -43,6 +43,19 @@ const server = new ApolloServer<MainContext>({
   ]
 })
 
+const dataSourceConfig = {
+  knexConfig: config, 
+  writeKnexConfig: config,
+  cache: server.cache
+}
+
+const dataSources = {
+  user: new UserSource(dataSourceConfig),
+  chat: new ChatSource(dataSourceConfig),
+  userChat: new UserChatSource(dataSourceConfig),
+  message: new MessageSource(dataSourceConfig)
+}
+
 const wsServer = new WebSocketServer({
   server: httpServer,
   path: '/graphql'
@@ -55,10 +68,9 @@ const serverCleanUp = useServer(
 
     },
     context: async (ctx, msg, args) => {
-      const userSource = new UserSource({knexConfig: config, cache: server.cache , writeKnexConfig: config})
       const token = ctx.connectionParams.authToken as string || ''
 
-      let user = token ? await userSource.getUserByToken(token) : null
+      let user = token ? await dataSources.user.getUserByToken(token) : null
 
       return { 
         pubsub,
@@ -76,12 +88,6 @@ app.use(
   cors<cors.CorsRequest>(),
   bodyParser.json(),
   expressMiddleware(server, ({ context: async ({req}):Promise<MainContext> => {
-    const { cache } = server
-    const userSource = new UserSource({knexConfig: config, cache, writeKnexConfig: config})
-    const chatSource = new ChatSource({knexConfig: config, cache, writeKnexConfig: config})
-    const userChatSource = new UserChatSource({knexConfig: config, cache, writeKnexConfig: config})
-    const messageSource = new MessageSource({knexConfig: config, cache, writeKnexConfig: config})
-
     const token = req.headers.authorization || ''
 
     let user = null
@@ -89,17 +95,12 @@ app.use(
     if (token) {
       const splitToken = token.split("Bearer ")
       if (splitToken && splitToken[1]) {
-        user = await userSource.getUserByToken(splitToken[1])
+        user = await dataSources.user.getUserByToken(splitToken[1])
       }
     }
 
     return {
-      dataSources: {
-        user: userSource,
-        chat: chatSource,
-        userChat: userChatSource,
-        message: messageSource
-      },
+      dataSources,
       pubsub,
       user
     }
