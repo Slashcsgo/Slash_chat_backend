@@ -1,10 +1,13 @@
 import { BatchedSQLDataSource, BatchedSQLDataSourceProps } from "@nic-jennings/sql-datasource";
+import { GraphQLError } from "graphql";
 import { BadRequest, ChatSuccess, DataNotChanged, Success } from "../../helpers/Responces.js";
 import { Chat } from "../../types/Chat";
 import { MainContext, SubContext } from "../../types/Context.js";
 import { Message } from "../../types/Message.js";
 import { User } from "../../types/User.js";
 import { UserChat } from "../../types/UserChat";
+import { ApolloServerErrorCode } from "@apollo/server/errors"
+import { BadUserInput } from "../../helpers/Errors.js";
 
 
 export class ChatSource extends BatchedSQLDataSource {
@@ -13,22 +16,26 @@ export class ChatSource extends BatchedSQLDataSource {
   }
 
   async addChat(chat: Chat, userID: Number, ctx: MainContext) {
-    const insertedChat = await this.db.write<Chat>('chats').insert({
-      title: chat.title,
-      description: chat.description,
-      admin_id: userID
-    }, ['id', 'description', 'title', 'admin_id'])
-    const userChat = await this.db.write<UserChat>('users_chats').insert({
-      chat_id: insertedChat[0].id,
-      user_id: userID
-    }, '*')
-
-    ctx.pubsub.publish("USER_ADDED_TO_CHAT", {
-      ...userChat[0],
-      chat: insertedChat[0],
-      user: ctx.user
-    })
-    return ChatSuccess(insertedChat[0])
+    if (chat.title) {
+      const insertedChat = await this.db.write<Chat>('chats').insert({
+        title: chat.title,
+        description: chat.description,
+        admin_id: userID
+      }, ['id', 'description', 'title', 'admin_id'])
+      const userChat = await this.db.write<UserChat>('users_chats').insert({
+        chat_id: insertedChat[0].id,
+        user_id: userID
+      }, '*')
+  
+      ctx.pubsub.publish("USER_ADDED_TO_CHAT", {
+        ...userChat[0],
+        chat: insertedChat[0],
+        user: ctx.user
+      })
+      return insertedChat[0]
+    } else {
+      BadUserInput('chat.title')
+    }
   }
   async removeChat(id: Number, userID: Number, ctx: MainContext) {
     const userChat = await this.db.write<UserChat>('users_chats').delete('*')
@@ -44,9 +51,9 @@ export class ChatSource extends BatchedSQLDataSource {
         chat: deletedChats[0],
         user: ctx.user
       })
-      return Success
+      return deletedChats[0]
     } else {
-      return BadRequest
+      BadUserInput('id')
     }
   }
 
@@ -75,9 +82,13 @@ export class ChatSource extends BatchedSQLDataSource {
         chat: updatedChat[0],
         users: chatUsers
       })
-      return ChatSuccess(updatedChat[0])
+      return updatedChat[0]
     } else {
-      return DataNotChanged
+      throw new GraphQLError('Unspecified error occured', {
+        extensions: {
+          code: ApolloServerErrorCode.INTERNAL_SERVER_ERROR
+        }
+      })
     }
   }
 }

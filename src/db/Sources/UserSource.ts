@@ -2,6 +2,9 @@ import { BatchedSQLDataSource, BatchedSQLDataSourceProps } from "@nic-jennings/s
 import { User } from "../../types/User";
 import jwt from "jsonwebtoken"
 import { SuccessWithToken, DataNotChanged, UserSuccess, WrongUsernameOrPassword } from "../../helpers/Responces.js";
+import { GraphQLError } from "graphql";
+import { ApolloServerErrorCode } from "@apollo/server/errors"
+import { BadUserInput } from "../../helpers/Errors.js";
 
 const jwtSecret = "e5RZ7EwJNtl3Dc6b3JS4tSSw8m4fM0ZRxkmdTCmC/Bs="
 
@@ -10,18 +13,14 @@ export class UserSource extends BatchedSQLDataSource {
     super(config);
   }
 
-  addUser(user: User) {
-    return this.db.write('users').insert({
+  async addUser(user: User) {
+    const addedUser: User[] = await this.db.write<User>('users').insert({
       name: user.name,
       description: user.description,
       email: user.email,
       password: user.password
-    }, ['id']).then(() => {
-      return {
-        success: true,
-        error: null
-      }
-    })
+    }, ['id']);
+    return addedUser[0].id;
   }
 
   async login(username: String, password: String, email: String) {
@@ -43,9 +42,9 @@ export class UserSource extends BatchedSQLDataSource {
         }
       }, jwtSecret)
       await this.db.write<User>('users').update({token}).where('id', '=', user[0].id)
-      return SuccessWithToken(token)
+      return token
     } else {
-      return WrongUsernameOrPassword
+      return BadUserInput(['username', 'password'])
     }
   }
 
@@ -70,9 +69,13 @@ export class UserSource extends BatchedSQLDataSource {
       .where('id', '=', userId).update({...data}, ['*'])
 
     if (updatedUser && updatedUser.length) {
-      return UserSuccess(updatedUser[0])
+      return updatedUser[0]
     } else {
-      return DataNotChanged
+      throw new GraphQLError('Unspecified error occured', {
+        extensions: {
+          code: ApolloServerErrorCode.INTERNAL_SERVER_ERROR
+        }
+      })
     }
   }
 }

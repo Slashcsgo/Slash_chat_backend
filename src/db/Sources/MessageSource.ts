@@ -1,4 +1,5 @@
 import { BatchedSQLDataSource, BatchedSQLDataSourceProps } from "@nic-jennings/sql-datasource";
+import { BadUserInput } from "../../helpers/Errors.js";
 import { BadRequest, MessageSuccess, Success } from "../../helpers/Responces.js";
 import { Message } from "../../types/Message";
 import { UserChat } from "../../types/UserChat";
@@ -19,7 +20,7 @@ export class MessageSource extends BatchedSQLDataSource {
 
   async sendMessage(
     chatID: Number, content: String, userID: Number
-  ): Promise<MessageResponce> {
+  ): Promise<Message> {
     const isUserInChat = await this.db.query<UserChat>('users_chats')
       .where('chat_id', '=', chatID)
       .andWhere('user_id', '=', userID)
@@ -31,26 +32,43 @@ export class MessageSource extends BatchedSQLDataSource {
           content
         }, ['*'])
       
-      return insertedMessage.length > 0 ? MessageSuccess(insertedMessage[0]) : BadRequest
+      if (insertedMessage.length > 0) {
+        return insertedMessage[0]
+      } else {
+        BadUserInput('chat_id')
+      }
+    } else {
+      return BadUserInput('chat_id')
     }
-    return BadRequest
   }
 
   async editMessage(
     messageID: Number, content: String, userID: Number
-  ): Promise<MessageResponce> {
-    const editedMessage = await this.db.write<Message>('messages')
-      .update({ content }, '*').where('id', '=', messageID)
-      .andWhere('user_id', '=', userID)
-    return editedMessage.length > 0 ? MessageSuccess(editedMessage[0]) : BadRequest
+  ): Promise<Message> {
+    if (content) {
+      const editedMessage = await this.db.write<Message>('messages')
+        .update({ content }, '*').where('id', '=', messageID)
+        .andWhere('user_id', '=', userID)
+      if (editedMessage.length > 0) {
+        return editedMessage[0]
+      } else {
+        BadUserInput('id')
+      }
+    } else {
+      BadUserInput('content')
+    }
   }
 
   async deleteMessage(
     messageID: Number, userID: Number
-  ): Promise<MessageResponce> {
+  ): Promise<Message> {
     const deletedMessage = await this.db.write<Message>('messages')
       .delete('*').where('id', '=', messageID).andWhere('user_id', userID)
-
-    return deletedMessage.length > 0 ? MessageSuccess(deletedMessage[0]) : BadRequest
+    
+    if (deletedMessage.length > 0) {
+      return deletedMessage[0]
+    } else {
+      BadUserInput('id')
+    }
   }
 }

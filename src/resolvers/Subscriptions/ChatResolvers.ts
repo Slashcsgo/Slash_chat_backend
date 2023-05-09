@@ -1,4 +1,5 @@
 import { withFilter } from "graphql-subscriptions";
+import { Unauthorized } from "../../helpers/Errors.js";
 import { Chat } from "../../types/Chat";
 import { SubContext } from "../../types/Context";
 
@@ -17,7 +18,7 @@ const resolve = (payload) => payload.chat
 
 const subscribeFn = (triggers: string[]) => withFilter(
   (_root, _args, ctx: SubContext) => {
-    if (!ctx.user) throw new Error("Unauthorized")
+    if (!ctx.user) Unauthorized()
     return ctx.pubsub.asyncIterator(triggers)
   },
   filter

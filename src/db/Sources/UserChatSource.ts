@@ -1,4 +1,5 @@
 import { BatchedSQLDataSource, BatchedSQLDataSourceProps } from "@nic-jennings/sql-datasource";
+import { BadUserInput } from "../../helpers/Errors.js";
 import { BadRequest, Success } from "../../helpers/Responces.js";
 import { Chat } from "../../types/Chat";
 import { MainContext } from "../../types/Context.js";
@@ -44,10 +45,13 @@ export class UserChatSource extends BatchedSQLDataSource {
           chat: chats[0]
         })
         
-        return Success
+        return userToAdd
+      } else {
+        BadUserInput('user_id')
       }
+    } else {
+      BadUserInput('chat_id')
     }
-    return BadRequest
   }
 
   async removeUserFromChat(userToRemove: Number, chatID: Number, userID: Number, ctx: MainContext) {
@@ -72,9 +76,9 @@ export class UserChatSource extends BatchedSQLDataSource {
             users: [userToRemove],
             chat: chat[0]
           })
-          return Success
+          return userToRemove
         } else {
-          return BadRequest
+          BadUserInput(['user_id', 'chat_id'])
         }
       }
       // Если инициатор мутации является админом чата, разрешаем удаление
@@ -95,14 +99,17 @@ export class UserChatSource extends BatchedSQLDataSource {
             chat: chats[0]
           })
   
-          return Success
+          return userToRemove
         } else {
           return await simpleUserRemove()
         }
       } else if (userToRemove === userID) {
         return await simpleUserRemove()
+      } else {
+        BadUserInput('chat_id')
       }
+    } else {
+      BadUserInput('chat_id')
     }
-    return BadRequest
   }
 }

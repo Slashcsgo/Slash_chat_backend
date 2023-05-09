@@ -1,45 +1,6 @@
 export const typeDefs = `#graphql
   scalar Date
 
-  type Error {
-    message: String!,
-    code: Int!,
-  }
-
-  interface Responce {
-    success: Boolean!,
-    error: Error,
-  }
-
-  type NoBodyResponce implements Responce {
-    success: Boolean!,
-    error: Error
-  }
-
-  type MessageResponce implements Responce {
-    success: Boolean!,
-    error: Error,
-    message: Message
-  }
-
-  type UserResponce implements Responce {
-    success: Boolean!,
-    error: Error,
-    user: User
-  }
-
-  type ChatResponce implements Responce {
-    success: Boolean!,
-    error: Error,
-    chat: Chat
-  }
-
-  type LoginResponce implements Responce {
-    success: Boolean!,
-    error: Error,
-    token: String
-  }
-
   type User {
     id: ID,
     name: String,
@@ -87,20 +48,20 @@ export const typeDefs = `#graphql
   }
 
   type Mutation {
-    addUser(name: String!, description: String, email: String!, password: String!): NoBodyResponce!
-    modifyUser(description: String, name: String): UserResponce!
-    login(username: String, email: String, password: String!): LoginResponce!
+    addUser(name: String!, description: String, email: String!, password: String!): Int!
+    modifyUser(description: String, name: String): User!
+    login(username: String, email: String, password: String!): String!
 
-    addChat(title: String!, description: String): ChatResponce!
-    removeChat(id: Int!): NoBodyResponce!
-    modifyChat(id: Int!, description: String, title: String): ChatResponce!
+    addChat(title: String!, description: String): Chat!
+    removeChat(id: Int!): Chat!
+    modifyChat(id: Int!, description: String, title: String): Chat!
 
-    addUserToChat(user_id: Int!, chat_id: Int!): NoBodyResponce!
-    removeUserFromChat(chat_id: Int!, user_id: Int!): NoBodyResponce!
-    quitChat(chat_id: Int!): NoBodyResponce!
+    addUserToChat(user_id: Int!, chat_id: Int!): Int!
+    removeUserFromChat(chat_id: Int!, user_id: Int!): Int!
+    quitChat(chat_id: Int!): Int!
 
-    sendMessage(chat_id: Int!, content: String!): MessageResponce!
-    editMessage(id: Int!, content: String!): MessageResponce!
-    deleteMessage(id: Int!): MessageResponce!
+    sendMessage(chat_id: Int!, content: String!): Message!
+    editMessage(id: Int!, content: String!): Message!
+    deleteMessage(id: Int!): Message!
   }
 `

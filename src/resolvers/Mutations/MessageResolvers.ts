@@ -1,4 +1,4 @@
-import { UnauthorizedResponce } from "../../helpers/Responces.js"
+import { Unauthorized } from "../../helpers/Errors.js"
 import { MainContext } from "../../types/Context"
 
 export const messageResolvers = {
@@ -7,11 +7,11 @@ export const messageResolvers = {
       const result = await ctx.dataSources.message.sendMessage(
         args.chat_id, args.content, ctx.user.id
       )
-      if (result.message) {
+      if (result) {
         ctx.pubsub.publish(
           "MESSAGE_CREATED", 
           {
-            ...result.message,
+            ...result,
             user: {
               id: ctx.user.id,
               description: ctx.user.description,
@@ -23,7 +23,7 @@ export const messageResolvers = {
       }
       return result
     } else {
-      return UnauthorizedResponce
+      Unauthorized()
     }
   },
   editMessage: async (parent: any, args: {id: Number, content: String}, ctx: MainContext) => {
@@ -31,11 +31,11 @@ export const messageResolvers = {
       const result = await ctx.dataSources.message.editMessage(
         args.id, args.content, ctx.user.id
       )
-      if (result.message) {
+      if (result) {
         ctx.pubsub.publish(
           "MESSAGE_EDITED",
           {
-            ...result.message,
+            ...result,
             user: {
               id: ctx.user.id,
               description: ctx.user.description,
@@ -47,18 +47,18 @@ export const messageResolvers = {
       }
       return result
     } else {
-      return UnauthorizedResponce
+      Unauthorized()
     }
   },
   deleteMessage: async (parent: any, args: {id: Number}, ctx: MainContext) => {
     if (ctx.user) {
       const result = await ctx.dataSources.message
         .deleteMessage(args.id, ctx.user.id)
-      if (result.message) {
+      if (result) {
         ctx.pubsub.publish(
           "MESSAGE_DELETED",
           {
-            ...result.message,
+            ...result,
             user: {
               id: ctx.user.id,
               description: ctx.user.description,
@@ -70,7 +70,7 @@ export const messageResolvers = {
       }
       return result
     } else {
-      return UnauthorizedResponce
+      Unauthorized()
     }
   }
 }

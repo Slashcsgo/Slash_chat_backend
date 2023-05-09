@@ -1,9 +1,11 @@
+import { Unauthorized } from "../../helpers/Errors.js"
 import { UnauthorizedResponce } from "../../helpers/Responces.js"
 import { MainContext } from "../../types/Context"
 import { User } from "../../types/User"
 
 export const userResolvers = {
   addUser: (parent: any, args: User, ctx: MainContext) => {
+    console.log(args)
     return ctx.dataSources.user.addUser({...args})
   },
   login: (
@@ -21,7 +23,7 @@ export const userResolvers = {
 
       return ctx.dataSources.user.modifyUser(ctx.user.id, updateData)
     } else {
-      return UnauthorizedResponce
+      return Unauthorized()
     }
   }
 }
