@@ -1,17 +1,7 @@
 import { BatchedSQLDataSource, BatchedSQLDataSourceProps } from "@nic-jennings/sql-datasource";
 import { BadUserInput } from "../../helpers/Errors.js";
-import { BadRequest, MessageSuccess, Success } from "../../helpers/Responces.js";
 import { Message } from "../../types/Message";
 import { UserChat } from "../../types/UserChat";
-
-type MessageResponce = {
-  success: boolean,
-  error?: {
-    message: string,
-    code: number
-  },
-  message?: Message
-}
 
 export class MessageSource extends BatchedSQLDataSource {
   constructor (config: BatchedSQLDataSourceProps) {

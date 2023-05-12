@@ -1,7 +1,7 @@
 export const typeDefs = `#graphql
   scalar Date
 
-  type User {
+  type user {
     id: ID,
     name: String,
     email: String,
@@ -9,59 +9,60 @@ export const typeDefs = `#graphql
     description: String
   }
   
-  type Chat {
+  type chats {
     id: ID,
     title: String,
     description: String,
+    admin_id: ID
   }
 
-  type Message {
+  type messages {
     id: ID,
-    user: User,
-    chat: Chat,
+    user: user,
+    chat: chats,
     chat_id: ID,
     content: String,
     created_at: Date
   }
 
-  type UserChat {
+  type userchat {
     id: ID,
-    user: User,
-    chat: Chat,
+    user: user,
+    chat: chats,
   }
 
   type Query {
-    user: User
+    user: user
   }
 
   type Subscription {
-    messageCreated(chatId: Int!): Message
-    messageEdited(chatId: Int!): Message
-    messageDeleted(chatId: Int!): Message
+    messageCreated(chatId: Int!): messages
+    messageEdited(chatId: Int!): messages
+    messageDeleted(chatId: Int!): messages
 
-    userAddedToChat(chatId: Int!): User
-    userRemovedFromChat(chatId: Int!): User
+    userAddedToChat(chatId: Int!): user
+    userRemovedFromChat(chatId: Int!): user
 
-    chatAdded: Chat
-    chatRemoved: Chat
-    chatModified: Chat
+    chatAdded: chats
+    chatRemoved: chats
+    chatModified: chats
   }
 
   type Mutation {
     addUser(name: String!, description: String, email: String!, password: String!): Int!
-    modifyUser(description: String, name: String): User!
+    modifyUser(description: String, name: String): user!
     login(username: String, email: String, password: String!): String!
 
-    addChat(title: String!, description: String): Chat!
-    removeChat(id: Int!): Chat!
-    modifyChat(id: Int!, description: String, title: String): Chat!
+    addChat(title: String!, description: String): chats!
+    removeChat(id: Int!): chats!
+    modifyChat(id: Int!, description: String, title: String): chats!
 
     addUserToChat(user_id: Int!, chat_id: Int!): Int!
     removeUserFromChat(chat_id: Int!, user_id: Int!): Int!
     quitChat(chat_id: Int!): Int!
 
-    sendMessage(chat_id: Int!, content: String!): Message!
-    editMessage(id: Int!, content: String!): Message!
-    deleteMessage(id: Int!): Message!
+    sendMessage(chat_id: Int!, content: String!): messages!
+    editMessage(id: Int!, content: String!): messages!
+    deleteMessage(id: Int!): messages!
   }
 `

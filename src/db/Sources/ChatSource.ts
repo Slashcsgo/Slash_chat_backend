@@ -1,8 +1,7 @@
 import { BatchedSQLDataSource, BatchedSQLDataSourceProps } from "@nic-jennings/sql-datasource";
 import { GraphQLError } from "graphql";
-import { BadRequest, ChatSuccess, DataNotChanged, Success } from "../../helpers/Responces.js";
 import { Chat } from "../../types/Chat";
-import { MainContext, SubContext } from "../../types/Context.js";
+import { MainContext} from "../../types/Context.js";
 import { Message } from "../../types/Message.js";
 import { User } from "../../types/User.js";
 import { UserChat } from "../../types/UserChat";
@@ -27,6 +26,10 @@ export class ChatSource extends BatchedSQLDataSource {
         user_id: userID
       }, '*')
   
+      ctx.pubsub.publish("CHAT_ADDED", {
+        chat: insertedChat[0],
+        users: [userID]
+      })
       ctx.pubsub.publish("USER_ADDED_TO_CHAT", {
         ...userChat[0],
         chat: insertedChat[0],
@@ -50,6 +53,10 @@ export class ChatSource extends BatchedSQLDataSource {
         ...userChat[0],
         chat: deletedChats[0],
         user: ctx.user
+      })
+      ctx.pubsub.publish("CHAT_REMOVED", {
+        chat: deletedChats[0],
+        users: userChat.map(e => e.user_id)
       })
       return deletedChats[0]
     } else {
@@ -77,7 +84,6 @@ export class ChatSource extends BatchedSQLDataSource {
     ).map(element => element.id)
 
     if (updatedChat && updatedChat.length) {
-      console.log("PUBLISHED")
       ctx.pubsub.publish("CHAT_MODIFIED", {
         chat: updatedChat[0],
         users: chatUsers

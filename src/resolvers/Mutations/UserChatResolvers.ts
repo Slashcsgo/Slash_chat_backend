@@ -1,5 +1,4 @@
 import { Unauthorized } from "../../helpers/Errors.js"
-import { UnauthorizedResponce } from "../../helpers/Responces.js"
 import { MainContext } from "../../types/Context"
 
 export const userChatResolvers = {
